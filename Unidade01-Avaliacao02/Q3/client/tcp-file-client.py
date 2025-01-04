@@ -22,27 +22,36 @@ def Download():
 
         if fileIsOk == 0:
             tam = int.from_bytes(sock.recv(4), 'big') #recebe 4 bytes do tamanho do arq e converte para inteiro
-            
+            print(f"O número de arquivos encotrado é: {tam}")
             #tratamento para caso o arquivo já exista no cliente
-            if os.path.exists(DIRBASE + arq): 
-                resposta = input(f"Arquivo {arq} já existe Deseja subistituir? [S/N] ").lower()
+            for c in range(tam):
+                tamanho_nome = sock.recv(2)
+                tamanho_nome=  int.from_bytes(tamanho_nome, 'big')
+                fileName = sock.recv(tamanho_nome).decode('utf-8')
 
-                while resposta != 's' and resposta != 'n':
-                    print("Resposta inválida tente novamente usando 's' ou 'n'. ")
-                    resposta = input("Deseja subistituir? [S/N] ").lower()
-                if resposta == 's':
-                    None
-                elif resposta == 'n':
-                    print("Download cancelado ")
-                    return
-                    
-            fd = open(DIRBASE+arq, 'wb')
-            while tam > 0: 
-                recBytes = sock.recv(4096)
-                fd.write(recBytes)
-                tam -= len(recBytes) #atualiza o tamanho 
-            fd.close()
-            print("Arquivo recebido com sucesso! ")
+                bytes_arq = int.from_bytes(sock.recv(4),'big')
+                print(f"tamanho bytes e: {bytes_arq}")
+                print(f"arquivo bilu: {fileName}")
+
+                if os.path.exists(DIRBASE + fileName): 
+                    resposta = input(f"Arquivo {fileName} já existe Deseja subistituir? [S/N] ").lower()
+
+                    while resposta != 's' and resposta != 'n':
+                        print("Resposta inválida tente novamente usando 's' ou 'n'. ")
+                        resposta = input("Deseja subistituir? [S/N] ").lower()
+                    if resposta == 's':
+                        None
+                    elif resposta == 'n':
+                        print("Download cancelado ")
+                        return
+                        
+                with open(DIRBASE + fileName, 'wb') as fd:
+                    recebido = 0
+                    while recebido < bytes_arq: 
+                        recBytes = sock.recv(min(4096, bytes_arq - recebido)) #pega o tamanho exato caso o resto seja menor de 4k(sem estava)
+                        fd.write(recBytes)
+                        recebido += len(recBytes)
+                print("Arquivo recebido com sucesso! ")
 
         else:
             print('Arquivo inacessível')
