@@ -14,9 +14,13 @@ def Download():
         
         # Converte o nome do arquivo para bytes e envia o comprimento e o nome
         lenNameArq = len(arq.encode('utf-8')).to_bytes(2, 'big') #2 bytes do tamanho 
-        msg = lenNameArq + arq.encode()  # Concatena o comprimento e o nome do arquivo
+        msg = lenNameArq + arq.encode()  # Concatena o com  primento e o nome do arquivo
         sock.send(msg)  
-
+        
+        pasta_valida = int.from_bytes(sock.recv(2), 'big')
+        if pasta_valida == 3:
+            print("Acesso negado, você não pode acessar arquivos fora da pasta files.")
+            return
         # Espera pela resposta do servidor
         fileIsOk = int.from_bytes(sock.recv(2), 'big')
 
@@ -48,7 +52,7 @@ def Download():
                 with open(DIRBASE + fileName, 'wb') as fd:
                     recebido = 0
                     while recebido < bytes_arq: 
-                        recBytes = sock.recv(min(4096, bytes_arq - recebido)) #pega o tamanho exato caso o resto seja menor de 4k(sem estava)
+                        recBytes = sock.recv(min(4096, bytes_arq - recebido)) #pega o tamanho exato caso o resto seja menor de 4k
                         fd.write(recBytes)
                         recebido += len(recBytes)
                 print("Arquivo recebido com sucesso! ")
