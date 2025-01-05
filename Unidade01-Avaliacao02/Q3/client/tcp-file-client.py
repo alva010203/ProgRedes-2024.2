@@ -1,10 +1,31 @@
-import socket,os
+import socket, os
 
 def menu():
-    print("1- Socilitar lista de arquivos")
+    print("1- Solicitar lista de arquivos")
     print("2- Fazer download de um arquivo")
+    print("3- Calcular hash SHA1 de um arquivo até uma posição")
     print("0- Sair\n")
-    return int(input("Escolha  uma opção: "))
+    return int(input("Escolha uma opção: "))
+
+def calcular_hash():
+    try:
+        sock.send((3).to_bytes(2, 'big'))  # Solicita o cálculo do hash
+
+        # Solicita o nome do arquivo e a posição
+        arq = input('Digite o nome do arquivo: ')
+        posicao = int(input('Digite a posição até onde calcular o hash: '))
+
+        # Converte o nome do arquivo e a posição para bytes e envia
+        lenNameArq = len(arq.encode('utf-8')).to_bytes(2, 'big')
+        msg = lenNameArq + arq.encode() + posicao.to_bytes(4, 'big')  # Concatena o nome do arquivo e a posição
+        sock.send(msg)
+
+        # Recebe a resposta do hash calculado
+        hash_recebido = sock.recv(1024).decode('utf-8')
+        print(f"Hash SHA1 até a posição especificada: {hash_recebido}")
+    
+    except Exception as e:
+        print(f"Erro ao calcular o hash: {e}")
 
 def Download():
     try:
@@ -33,9 +54,8 @@ def Download():
                 tamanho_nome=  int.from_bytes(tamanho_nome, 'big')
                 fileName = sock.recv(tamanho_nome).decode('utf-8')
 
-                bytes_arq = int.from_bytes(sock.recv(4),'big')
-                print(f"tamanho bytes e: {bytes_arq}")
-                print(f"arquivo bilu: {fileName}")
+                bytes_arq = int.from_bytes(sock.recv(4),'big') #tamanho em bytes do arquivo
+                print(f"arquivo: {fileName}")
 
                 if os.path.exists(DIRBASE + fileName): 
                     resposta = input(f"Arquivo {fileName} já existe Deseja subistituir? [S/N] ").lower()
@@ -72,12 +92,15 @@ def listagem():
     print('Solicitando a listagem de arquivos...\n')
     tamanho = int.from_bytes(sock.recv(4), 'big')
     dados = b''
+
     while len(dados) < tamanho:
         dados += sock.recv(4096)
+    
     print("Arquivos disponíveis:")
     print(dados.decode('utf-8'))
-    
+
 DIRBASE = "files/"
+
 # Configurações do servidor
 host = "127.0.0.1"
 port = 3456
@@ -94,11 +117,15 @@ try:
         listagem()
     elif opcao == 2:
         Download()
+    elif opcao == 3:
+        calcular_hash()  
     elif opcao == 0:
         None
     else:
         print("Opção inválida")
 
+except KeyboardInterrupt:
+    print('O usuario finalizou a ação')
 except socket.error as e:
     print(f'Erro de conexão: {e}')
 
