@@ -6,6 +6,14 @@ PORT = 3456
 
 myTCPsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+caminho_dir = os.path.realpath(DIRBASE) #caminho iteiro ate files
+def pasta_valida(pasta_solicitada):
+    solicitacao = os.path.join(caminho_dir, pasta_solicitada) 
+    caminho_usuario = os.path.realpath(solicitacao) #caminho inteiro solicitado pelo usuario
+
+    comparação = os.path.commonpath([caminho_dir, caminho_usuario]) #retorna o maior caminho comum entre os diretorios
+    return comparação
+
 try:
     myTCPsock.bind((INTERFACE, PORT))
     myTCPsock.listen(1)  # permite apenas uma conexão
@@ -19,12 +27,28 @@ try:
         comando = con.recv(2)
         comando = int.from_bytes(comando, 'big')
 
-        if comando == 2:  # Pedido de download de arquivos
+        if comando == 1:  # Pedido para listar arquivos
+            print('Listando arquivos')
+
+            lista_arquivos = os.listdir(DIRBASE)
+            lista_arquivos = [f"{arq} ({os.path.getsize(DIRBASE + arq)} bytes)" for arq in lista_arquivos]
+
+            lista_junta = '\n'.join(lista_arquivos).encode('utf-8')
+            con.send(len(lista_junta).to_bytes(4, 'big'))
+            con.send(lista_junta)
+
+        elif comando == 2:  # Pedido de download de arquivos
             mensagem = con.recv(2)  # recebe 2 bytes do tamanho
             mensagem = int.from_bytes(mensagem, 'big')  # converte para inteiro
             
             fileName = con.recv(mensagem).decode('utf-8') #proximos bytes que contem o nome do arquivo
             print ("Recebi pedido para o arquivo ", fileName)
+
+            pasta_valida(fileName)
+            if pasta_valida(fileName) == caminho_dir:
+                con.send(b'\x00\x02')
+            else:
+                con.send(b'\x00\x03')
 
             # Glob
             files = glob.glob(DIRBASE + fileName)
@@ -60,16 +84,6 @@ try:
                 con.send(b'\x00\x01')  # Nenhum arquivo encontrado
 
             con.close()
-
-        elif comando == 1:  # Pedido para listar arquivos
-            print('Listando arquivos')
-
-            lista_arquivos = os.listdir(DIRBASE)
-            lista_arquivos = [f"{arq} ({os.path.getsize(DIRBASE + arq)} bytes)" for arq in lista_arquivos]
-
-            lista_junta = '\n'.join(lista_arquivos).encode('utf-8')
-            con.send(len(lista_junta).to_bytes(4, 'big'))
-            con.send(lista_junta)
 
 except OSError:
     print("Erro: Endereço em uso.")
