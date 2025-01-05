@@ -23,6 +23,7 @@ def calcular_sha1_ate_posicao(caminho_arquivo, posicao):
             dados = f.read(posicao)  # Lê o arquivo até a posição especificada
             sha1.update(dados)  # Atualiza o hash com os dados lidos
         return sha1.hexdigest()
+    
     except FileNotFoundError:
         return None  # Arquivo não encontrado
 
