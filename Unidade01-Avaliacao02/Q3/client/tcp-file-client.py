@@ -111,24 +111,32 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 try:
     sock.connect((host, port))
     print("Conectado ao servidor.\n")
-    opcao = menu()
+    try:
+        opcao = menu()
 
-    if opcao == 1:
-        listagem()
-    elif opcao == 2:
-        Download()
-    elif opcao == 3:
-        calcular_hash()  
-    elif opcao == 0:
-        None
-    else:
-        print("Opção inválida")
-except ValueError:
-    print("valor informado não corresponde a numeros de escolha")
+        if opcao == 1:
+            listagem()
+        elif opcao == 2:
+            Download()
+        elif opcao == 3:
+            calcular_hash()  
+        elif opcao == 0:
+            None
+        else:
+            print("Opção inválida")
+    except ValueError:
+        print("Opção inválida. Porfavor tente um número válido. ")
+    except NameError:
+        print("Opção inválida. Porfavor tente um número válido. ")
+
 except KeyboardInterrupt:
-    print('O usuario finalizou a ação')
+    print('O usuário finalizou a ação.')
+except ConnectionRefusedError:
+    print("Erro de conexão: O servidor recusou a conexão. Verifique se o servidor está ativo.")
+except socket.timeout:
+    print("Erro de conexão: O tempo de conexão foi excedido.")
 except socket.error as e:
-    print(f'Erro de conexão: {e}')
+    print(f"Erro de rede: {e}")
 
 finally:
     sock.close()  # Fecha o socket se ele estiver aberto
