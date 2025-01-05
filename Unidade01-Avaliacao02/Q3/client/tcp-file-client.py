@@ -123,7 +123,8 @@ try:
         None
     else:
         print("Opção inválida")
-
+except ValueError:
+    print("valor informado não corresponde a numeros de escolha")
 except KeyboardInterrupt:
     print('O usuario finalizou a ação')
 except socket.error as e:
